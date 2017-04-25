@@ -74,9 +74,25 @@ function osd_disk_prepare {
     wait_for_file ${OSD_JOURNAL}
     chown ceph. ${OSD_JOURNAL}
   elif [[ ${OSD_BLUESTORE} -eq 1 ]]; then
-    for part in $(seq 1 4); do
-      wait_for_file $(dev_part ${OSD_DEVICE} $part)
-      chown ceph. $(dev_part ${OSD_DEVICE} $part)
+    # todo: remove /dev/ just keep the device
+    # todo: readlink -f
+    dev_real_path=$(resolve_symlink $OSD_BLUESTORE_BLOCK_WAL)
+    for partition in $(list_dev_partitions ${dev_real_path#/dev/}); do
+      if [[ "$(get_part_label /dev/$partition)" == "ceph block.wal" ]]; then
+        chown ceph. /dev/$partition
+      fi
+    done
+    dev_real_path=$(resolve_symlink $OSD_BLUESTORE_BLOCK_DB)
+    for partition in $(list_dev_partitions ${dev_real_path#/dev/}); do
+      if [[ "$(get_part_label /dev/$partition)" == "ceph block.db" ]]; then
+        chown ceph. /dev/$partition
+      fi
+    done
+    dev_real_path=$(resolve_symlink $OSD_DEVICE)
+    for partition in $(list_dev_partitions ${dev_real_path#/dev/}); do
+      if [[ "$(get_part_label /dev/$partition)" == "ceph data" || "$(get_part_label /dev/$partition)" == "ceph block" ]]; then
+        chown ceph. /dev/$partition
+      fi
     done
   else
     wait_for_file $(dev_part ${OSD_DEVICE} 2)

@@ -226,3 +226,18 @@ function invalid_ceph_daemon {
 function get_osd_path {
   echo "$OSD_PATH_BASE-$1/"
 }
+
+# List all the partitions on a block device
+function list_dev_partitions {
+  egrep -o ${1}[0-9] /proc/partitions
+}
+
+# Get the partition label of a given partition
+function get_part_label {
+  blkid -o value -s PARTLABEL ${@}
+}
+
+# print resolved symbolic links of a device
+function resolve_symlink {
+  readlink -f ${@}
+}
